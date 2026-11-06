@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Tier List</title>
+    <style>
+      :root {
+        --bg: #121218;
+        --bg-2: #1a1a25;
+        --panel: #202133;
+        --panel-strong: #2a2c42;
+        --card: #2f334d;
+        --text: #f2f4ff;
+        --muted: #b2b8d8;
+        --line: rgba(255, 255, 255, 0.12);
+        --shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+        --gold: #f7c76e;
+        --gold-soft: rgba(247, 199, 110, 0.15);
+        --red: #ff6b6b;
+        --orange: #ff9f43;
+        --yellow: #f4d35e;
+        --green: #52d6a6;
+        --blue: #60a5fa;
+        --purple: #b38cf6;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top left, rgba(247, 199, 110, 0.18), transparent 30%),
+          radial-gradient(circle at top right, rgba(179, 140, 246, 0.16), transparent 25%),
+          var(--bg);
+        color: var(--text);
+        font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        padding: 36px 18px 64px;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .app {
+        width: min(1170px, 100%);
+      }
+
+      .hero {
+        background: linear-gradient(135deg, rgba(247, 199, 110, 0.08), rgba(255, 255, 255, 0.02));
+        border: 1px solid rgba(247, 199, 110, 0.25);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 28px 32px 26px;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--gold);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(42px, 6vw, 78px);
+        line-height: 0.95;
+        letter-spacing: 0.04em;
+        font-weight: 900;
+      }
+
+      .subtitle {
+        margin: 18px 0 0;
+        max-width: 760px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.7;
+        word-break: keep-all;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--gold-soft);
+        border: 1px solid rgba(247, 199, 110, 0.25);
+        border-radius: 999px;
+        padding: 10px 16px;
+        color: var(--text);
+      }
+
+      .pill span {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .pill strong {
+        font-size: 24px;
+        color: var(--gold);
+      }
+
+      .board-wrapper {
+        margin-top: 22px;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 14px;
+        padding: 14px 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(32, 33, 51, 0.8);
+      }
+
+      .toolbar p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .toolbar strong {
+        color: var(--gold);
+      }
+
+      .action-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 999px;
+        padding: 11px 18px;
+        cursor: pointer;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+        font-weight: 800;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn.primary {
+        background: var(--gold);
+        color: #1c1605;
+      }
+
+      .btn.secondary {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+
+      .board {
+        display: grid;
+        gap: 14px;
+      }
+
+      .tier-row {
+        display: grid;
+        grid-template-columns: 90px minmax(0, 1fr);
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: rgba(32, 33, 51, 0.95);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+      }
+
+      .tier-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 42px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        color: #1c1605;
+        text-shadow: rgba(255,255,255,0.2) 0 1px 0;
+      }
+
+      .row-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 16px;
+        min-height: 100px;
+        align-items: center;
+      }
+
+      .movie-card {
+        appearance: none;
+        border: 2px solid transparent;
+        background: var(--card);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 12px 14px;
+        min-height: 52px;
+        max-width: 220px;
+        cursor: pointer;
+        font-weight: 800;
+        line-height: 1.4;
+        text-align: left;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+        word-break: keep-all;
+      }
+
+      .movie-card:hover {
+        transform: translateY(-1px);
+        border-color: rgba(247, 199, 110, 0.6);
+      }
+
+      .movie-card.selected {
+        border-color: var(--gold);
+        background: rgba(247, 199, 110, 0.12);
+        box-shadow: 0 0 0 1px rgba(247, 199, 110, 0.3);
+      }
+
+      .empty {
+        color: var(--muted);
+        opacity: 0.75;
+        font-weight: 700;
+        padding: 10px 0;
+      }
+
+      @media (max-width: 680px) {
+        .hero {
+          padding: 22px 18px 18px;
+        }
+
+        .tier-row {
+          grid-template-columns: 1fr;
+        }
+
+        .tier-label {
+          min-height: 68px;
+          letter-spacing: 0.06em;
+        }
+
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .action-group {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .movie-card {
+          max-width: none;
+          width: calc(50% - 5px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="hero">
+        <p class="eyebrow">my movie taste</p>
+        <h1>영화 티어 리스트</h1>
+        <p class="subtitle">
+          좋아하는 장면이 기억나는 영화, 다시 보고 싶은 작품, 압도적인 명작들을 기준으로
+          나만의 티어를 정리해 보세요. 취향이 드러나는 영화 목록을 한눈에 살펴볼 수 있습니다.
+        </p>
+
+        <div class="meta">
+          <div class="pill"><span>총 작품</span><strong id="totalMovies">0</strong></div>
+          <div class="pill"><span>최고 티어</span><strong id="bestTier">S</strong></div>
+        </div>
+      </header>
+
+      <main class="board-wrapper">
+        <div class="toolbar">
+          <p>선택한 영화 <strong id="selectedCount">0</strong>편 · 취향 기준으로 정리 중</p>
+          <div class="action-group">
+            <button type="button" class="btn secondary" id="resetButton">초기화</button>
+            <button type="button" class="btn primary" id="saveButton">저장하기</button>
+          </div>
+        </div>
+
+        <div id="board" class="board" aria-live="polite"></div>
+      </main>
+    </div>
+
+    <script>
+      const tierData = [
+        {
+          label: 'S',
+          color: '#ff6b6b',
+          films: ['어바웃 타임', '인셉션', '쇼생크 탈출', '센과 치히로의 행방불명', '라라랜드']
+        },
+        {
+          label: 'A',
+          color: '#ff9f43',
+          films: ['기생충', '인터스텔라', '마션', '조커', '오펜하이머']
+        },
+        {
+          label: 'B',
+          color: '#f4d35e',
+          films: ['토이스토리 3', '스파이더맨: 노 웨이 홈', '대부', '인사이드 아웃', '아바타']
+        },
+        {
+          label: 'C',
+          color: '#52d6a6',
+          films: ['어벤져스: 엔드게임', '분노의 질주', '엑시트', '알라딘', '겨울왕국']
+        },
+        {
+          label: 'D',
+          color: '#60a5fa',
+          films: ['문라이트', '코코', '위대한 쇼맨', '토이스토리', '업']
+        },
+        {
+          label: 'F',
+          color: '#b38cf6',
+          films: ['러브 액츄얼리', '쥬라기 월드', '나홀로 집에', '매트릭스', '아이언맨']
+        }
+      ];
+
+      const STORAGE_KEY = 'movie-tier-selection';
+
+      function getSavedSelection() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function saveSelection(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      }
+
+      function renderBoard() {
+        const board = document.getElementById('board');
+        const selectedSet = new Set(getSavedSelection());
+
+        board.innerHTML = tierData.map((tier) => {
+          const cards = tier.films.map((film) => {
+            const isSelected = selectedSet.has(film);
+            return `
+              <button type="button" class="movie-card ${isSelected ? 'selected' : ''}" data-film="${film}">
+                ${film}
+              </button>
+            `;
+          }).join('');
+
+          return `
+            <div class="tier-row">
+              <div class="tier-label" style="background:${tier.color};">${tier.label}</div>
+              <div class="row-content">
+                ${cards || '<span class="empty">담긴 영화가 아직 없어요.</span>'}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        updateSummary();
+      }
+
+      function updateSummary() {
+        const selected = getSavedSelection();
+        const total = tierData.reduce((sum, tier) => sum + tier.films.length, 0);
+        const bestTier = selected.length === 0 ? 'S' : 'S';
+
+        document.getElementById('totalMovies').textContent = total;
+        document.getElementById('selectedCount').textContent = selected.length;
+        document.getElementById('bestTier').textContent = bestTier;
+      }
+
+      document.addEventListener('click', (event) => {
+        const card = event.target.closest('.movie-card');
+        if (!card) return;
+
+        const film = card.dataset.film;
+        const selected = getSavedSelection();
+        const index = selected.indexOf(film);
+
+        if (index >= 0) {
+          selected.splice(index, 1);
+        } else {
+          selected.push(film);
+        }
+
+        saveSelection(selected);
+        renderBoard();
+      });
+
+      document.getElementById('resetButton').addEventListener('click', () => {
+        localStorage.removeItem(STORAGE_KEY);
+        renderBoard();
+      });
+
+      document.getElementById('saveButton').addEventListener('click', () => {
+        const current = getSavedSelection();
+        const confirmed = current.length > 0 ? current.length : 0;
+        alert(`현재까지 선택한 영화는 ${confirmed}편입니다. 브라우저에 저장되었어요!`);
+        saveSelection(current);
+      });
+
+      renderBoard();
+    </script>
+  </body>
+</html>
