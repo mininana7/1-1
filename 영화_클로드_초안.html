@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Movie Tier List</title>
+<style>
+  :root{
+    --bg:#14121A; --panel:#1D1A25; --card:#262231; --text:#F1EEE8; --muted:#9D97A8; --accent:#F5C451;
+    --S:#FF6B6B; --A:#FF9F43; --B:#F7D154; --C:#4CD39A; --D:#5AA9FF; --F:#A88BFF;
+    --display:"Bebas Neue","Oswald","Impact","Haettenschweiler","Arial Narrow Bold",sans-serif;
+    --body:"Noto Sans KR","Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body)}
+  body{min-height:100vh;background:radial-gradient(1200px 420px at 50% -140px,#3a2a4a66,transparent 70%),var(--bg)}
+  .wrap{max-width:1120px;margin:0 auto;padding:36px 28px 72px}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:26px}
+  h1{margin:0;font-family:var(--display);font-weight:400;font-size:58px;letter-spacing:2px;line-height:1}
+  h1 .dot{color:var(--accent)}
+  .sub{margin:8px 0 0;font-size:14px;color:var(--muted)}
+  .tabs{display:flex;background:var(--panel);border-radius:999px;padding:4px;flex-shrink:0}
+  .tab{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:15px;padding:10px 22px;border-radius:999px;cursor:pointer}
+  .tab[aria-selected="true"]{background:var(--accent);color:#1A1620}
+
+  .bar{display:flex;align-items:center;gap:14px;background:var(--panel);border-radius:14px;padding:14px 18px;margin-bottom:16px}
+  .bar .spacer{flex:1}
+  .count{font-size:15px}
+  .count b{color:var(--accent);font-size:18px}
+  .status{font-size:14px;color:var(--muted)}
+  .status.ok{color:#8FE3B8}
+  .btn{border:0;font:inherit;font-weight:700;font-size:15px;padding:11px 22px;border-radius:10px;cursor:pointer;background:var(--accent);color:#1A1620}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+  .hint{font-size:13px;color:var(--muted);margin:0 0 12px 2px}
+
+  .board{display:flex;flex-direction:column;gap:8px}
+  .row{display:grid;grid-template-columns:84px 1fr;min-height:78px;background:var(--panel);border-radius:12px;overflow:hidden}
+  .tier{display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:40px;color:#1A1620;letter-spacing:1px}
+  .cards{display:flex;flex-wrap:wrap;gap:8px;padding:10px;align-content:flex-start}
+  .row.pool{background:transparent;border:1.5px dashed #3D3849;margin-top:10px}
+  .row.pool .tier{font-family:var(--body);font-size:13px;font-weight:700;color:var(--muted);text-align:center;line-height:1.35;padding:6px;white-space:pre-line}
+  .empty{align-self:center;font-size:13px;color:#6F6A7A;padding:0 4px}
+
+  .card{width:132px;min-height:56px;padding:10px 12px;border-radius:10px;background:var(--card);border:1.5px solid transparent;
+    color:var(--text);font:inherit;font-size:14px;font-weight:500;line-height:1.35;text-align:left;
+    display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;transition:transform .08s,border-color .12s}
+  .card:hover{transform:translateY(-2px);border-color:#5A5468}
+  .card.selected{border-color:var(--accent);box-shadow:0 0 0 3px #F5C45133}
+  .card.static{cursor:default}
+  .card.static:hover{transform:none;border-color:transparent}
+  .card .meta{font-size:12px;font-weight:400;color:var(--muted)}
+
+  .menu{position:absolute;z-index:20;display:flex;gap:6px;align-items:center;background:#2D2839;border-radius:12px;padding:8px;box-shadow:0 12px 30px #0008}
+  .menu .t{width:42px;height:42px;border:0;border-radius:9px;font-family:var(--display);font-size:24px;color:#1A1620;cursor:pointer}
+  .menu .t:hover{filter:brightness(1.12);transform:translateY(-1px)}
+  .menu .t.cur{outline:2px solid #fff;outline-offset:1px}
+  .menu .clear{height:42px;border:0;border-radius:9px;background:var(--card);color:var(--text);font:inherit;font-size:13px;font-weight:700;padding:0 14px;cursor:pointer}
+
+  .notice{display:none;background:#3A2530;color:#FFD2C7;border-radius:12px;padding:12px 16px;font-size:14px;margin-bottom:16px}
+  .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+    background:var(--accent);color:#1A1620;font-weight:700;padding:14px 24px;border-radius:12px;box-shadow:0 10px 30px #0007;transition:.25s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Movie Tier List<span class="dot">.</span></h1>
+      <p class="sub">한 PC에서 돌아가며 20편을 S~F로 평가해요. 저장하면 모두의 평균이 종합 티어에 바로 반영돼요.</p>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-mine" aria-selected="true">내 평가</button>
+      <button class="tab" role="tab" id="tab-all" aria-selected="false">종합 티어</button>
+    </div>
+  </header>
+
+  <div class="notice" id="notice"></div>
+
+  <!-- 내 평가 -->
+  <section id="view-mine">
+    <div class="bar">
+      <span class="status" id="mine-status"></span>
+      <span class="spacer"></span>
+      <button class="btn" id="save">저장</button>
+    </div>
+    <p class="hint">영화 카드를 누르고 티어를 고르세요. 안 본 영화는 비워 두고 저장해도 돼요.</p>
+    <div class="board" id="board-mine"></div>
+  </section>
+
+  <!-- 종합 티어 -->
+  <section id="view-all" class="hidden">
+    <div class="bar">
+      <span class="count">참여자 <b id="count">0</b>명</span>
+    </div>
+    <p class="hint">점수: S=6 · A=5 · B=4 · C=3 · D=2 · F=1. 평균을 반올림한 티어에 배치하고, 같은 티어 안에서는 가나다순으로 보여 줘요.</p>
+    <div class="board" id="board-all"></div>
+  </section>
+</div>
+
+<div class="menu hidden" id="menu"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 기본 데이터 ---------- */
+  const TITLES = ["겨울왕국","관상","국제시장","군체","기생충","냉정과 열정 사이","레미제라블","명량","반지의 제왕","서울의 봄",
+                  "스타워즈","아바타","악마는 프라다를 입는다","어벤져스","오디세이","왕과 사는 남자","인셉션","타이타닉","해리포터","호프"];
+  const MOVIES = TITLES.slice().sort((a,b)=>a.localeCompare(b,"ko")).map((t,i)=>({id:"m"+String(i+1).padStart(2,"0"), title:t}));
+  const TIERS  = ["S","A","B","C","D","F"];
+  const SCORE  = {S:6,A:5,B:4,C:3,D:2,F:1};
+  const TIER_OF= {6:"S",5:"A",4:"B",3:"C",2:"D",1:"F"};
+  const STORE_KEY = "movieTierList.v1";
+
+  /* ---------- 저장소 (이 브라우저 안에만 저장) ----------
+     사람별 평가는 남기지 않고, 영화별 점수 합계·평가 인원과 참여자 수만 저장합니다. */
+  let storageOK = true;
+  let memoryData = null;
+
+  function emptyData(){
+    const totals={}; MOVIES.forEach(m=>totals[m.id]={sum:0,n:0});
+    return {participants:0, totals};
+  }
+  function normalize(d){
+    const base=emptyData();
+    if(!d||typeof d!=="object") return base;
+    base.participants = Number.isFinite(d.participants)&&d.participants>0 ? Math.floor(d.participants) : 0;
+    MOVIES.forEach(m=>{
+      const t=d.totals&&d.totals[m.id];
+      if(t && Number.isFinite(t.sum) && Number.isFinite(t.n) && t.n>0) base.totals[m.id]={sum:t.sum,n:Math.floor(t.n)};
+    });
+    return base;
+  }
+  function load(){
+    if(storageOK){
+      try{ const raw=localStorage.getItem(STORE_KEY); return normalize(raw?JSON.parse(raw):null); }
+      catch(e){ storageOK=false; showNotice(); }
+    }
+    return memoryData ? normalize(memoryData) : emptyData();
+  }
+  function persist(data){
+    if(storageOK){
+      try{ localStorage.setItem(STORE_KEY, JSON.stringify(data)); return; }
+      catch(e){ storageOK=false; showNotice(); }
+    }
+    memoryData=data;
+  }
+  function showNotice(){
+    const n=$("notice");
+    n.textContent="이 브라우저에서는 평가를 저장할 수 없어요. 페이지를 닫으면 평가가 사라지니, 다른 브라우저(예: 크롬)에서 열어 주세요.";
+    n.style.display="block";
+  }
+
+  /* ---------- 상태 ---------- */
+  const $ = id => document.getElementById(id);
+  let draft = {};          // 지금 평가 중인 사람의 선택 {movieId: "S"}
+  let selected = null;
+  let view = "mine";
+
+  function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+  function makeBoard(container, poolLabel){
+    container.innerHTML="";
+    const rows={};
+    TIERS.forEach(k=>{
+      const row=el("div","row"); const t=el("div","tier",k); t.style.background="var(--"+k+")";
+      const c=el("div","cards"); row.append(t,c); container.append(row); rows[k]=c;
+    });
+    const pool=el("div","row pool"); const pt=el("div","tier",poolLabel); const pc=el("div","cards");
+    pool.append(pt,pc); container.append(pool);
+    return {rows, pool:pc};
+  }
+  function fillEmpty(board, poolDoneText){
+    TIERS.forEach(k=>{ if(!board.rows[k].children.length) board.rows[k].append(el("span","empty","—")); });
+    if(!board.pool.children.length) board.pool.append(el("span","empty",poolDoneText));
+  }
+
+  /* ---------- 내 평가 ---------- */
+  function renderMine(){
+    const board=makeBoard($("board-mine"),"미평가\n(안 본 영화)");
+    MOVIES.forEach(m=>{
+      const card=el("button","card"+(selected===m.id?" selected":""),m.title);
+      card.type="button";
+      card.addEventListener("click",e=>{ e.stopPropagation(); openMenu(m.id,card); });
+      (draft[m.id] ? board.rows[draft[m.id]] : board.pool).append(card);
+    });
+    fillEmpty(board,"모든 영화를 평가했어요");
+    const n=Object.keys(draft).length;
+    $("mine-status").textContent = n ? n+"/20편 평가했어요" : "아직 평가한 영화가 없어요";
+    $("save").disabled = n===0;
+  }
+
+  function openMenu(id, anchor){
+    selected=id;
+    document.querySelectorAll(".card.selected").forEach(c=>c.classList.remove("selected"));
+    anchor.classList.add("selected");
+    const menu=$("menu"); menu.innerHTML="";
+    TIERS.forEach(k=>{
+      const b=el("button","t"+(draft[id]===k?" cur":""),k);
+      b.type="button"; b.style.background="var(--"+k+")";
+      b.addEventListener("click",e=>{ e.stopPropagation(); assign(id,k); });
+      menu.append(b);
+    });
+    if(draft[id]){
+      const c=el("button","clear","비우기"); c.type="button";
+      c.addEventListener("click",e=>{ e.stopPropagation(); assign(id,null); });
+      menu.append(c);
+    }
+    menu.classList.remove("hidden");
+    const r=anchor.getBoundingClientRect();
+    const maxLeft=window.scrollX+document.documentElement.clientWidth-menu.offsetWidth-12;
+    menu.style.left=Math.max(12,Math.min(r.left+window.scrollX,maxLeft))+"px";
+    menu.style.top=(r.bottom+window.scrollY+6)+"px";
+  }
+  function closeMenu(){
+    $("menu").classList.add("hidden");
+    if(selected){ selected=null; document.querySelectorAll(".card.selected").forEach(c=>c.classList.remove("selected")); }
+  }
+  function assign(id,tier){
+    if(tier) draft[id]=tier; else delete draft[id];
+    closeMenu(); renderMine();
+  }
+  document.addEventListener("click",e=>{ if(!$("menu").contains(e.target)) closeMenu(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeMenu(); });
+
+  $("save").addEventListener("click",()=>{
+    const entries=Object.entries(draft);
+    if(!entries.length) return;
+    const data=load();
+    entries.forEach(([id,t])=>{ if(SCORE[t]){ data.totals[id].sum+=SCORE[t]; data.totals[id].n+=1; } });
+    data.participants+=1;
+    persist(data);
+    draft={};                       // 다음 사람을 위해 빈 상태로
+    closeMenu(); renderMine(); renderAll();
+    toast("저장했어요! 다음 분 차례예요.");
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+
+  /* ---------- 종합 티어 ---------- */
+  function renderAll(){
+    const data=load();
+    $("count").textContent=data.participants;
+    const board=makeBoard($("board-all"),"평가\n없음");
+    MOVIES.forEach(m=>{               // MOVIES가 이미 가나다순이라 티어 안에서도 가나다순
+      const t=data.totals[m.id];
+      const card=el("div","card static");
+      card.append(el("span",null,m.title));
+      if(t.n>0){
+        const avg=t.sum/t.n;
+        const tier=TIER_OF[Math.min(6,Math.max(1,Math.round(avg)))];
+        card.append(el("span","meta","평균 "+avg.toFixed(1)+" · "+t.n+"명"));
+        board.rows[tier].append(card);
+      }else{
+        board.pool.append(card);
+      }
+    });
+    fillEmpty(board,"모든 영화가 평가됐어요");
+  }
+
+  /* ---------- 탭 / 알림 ---------- */
+  function show(v){
+    view=v; closeMenu();
+    $("tab-mine").setAttribute("aria-selected",v==="mine");
+    $("tab-all").setAttribute("aria-selected",v==="all");
+    $("view-mine").classList.toggle("hidden",v!=="mine");
+    $("view-all").classList.toggle("hidden",v!=="all");
+    if(v==="all") renderAll();
+  }
+  $("tab-mine").addEventListener("click",()=>show("mine"));
+  $("tab-all").addEventListener("click",()=>show("all"));
+
+  let toastTimer=null;
+  function toast(msg){
+    const t=$("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200);
+  }
+
+  // 같은 PC에서 창을 여러 개 열어 둔 경우에도 종합 티어를 맞춰 줌
+  window.addEventListener("storage",e=>{ if(e.key===STORE_KEY) renderAll(); });
+
+  /* ---------- 시작 ---------- */
+  try{ localStorage.setItem(STORE_KEY+".check","1"); localStorage.removeItem(STORE_KEY+".check"); }
+  catch(e){ storageOK=false; showNotice(); }
+  renderMine();
+  renderAll();
+})();
+</script>
+</body>
+</html>
